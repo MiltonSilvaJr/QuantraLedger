@@ -1,0 +1,12 @@
+# Visual Studio
+.vs/
+bin/
+obj/
+*.user
+*.suo
+# Rider
+.idea/
+# VS Code
+.vscode/
+# logs
+*.log

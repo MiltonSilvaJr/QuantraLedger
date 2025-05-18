@@ -1,0 +1,58 @@
+
+@page "/"
+@inject LedgerDbContext Db
+
+<h3>Organizations</h3>
+
+@if (orgs == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr><th>Name</th><th>Accounts</th></tr>
+        </thead>
+        <tbody>
+        @foreach (var o in orgs)
+        {
+            <tr>
+                <td>@o.Name</td>
+                <td>
+                    <ul>
+                    @foreach (var a in o.Accounts)
+                    {
+                        <li>@a.Code: @balances.GetValueOrDefault(a.Code, 0)</li>
+                    }
+                    </ul>
+                </td>
+            </tr>
+        }
+        </tbody>
+    </table>
+}
+
+@code {
+    List<Organization>? orgs;
+    Dictionary<string, decimal> balances = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        orgs = await Db.Organizations
+                       .Include(o => o.Accounts)
+                       .AsNoTracking()
+                       .ToListAsync();
+
+        foreach (var o in orgs)
+        {
+            foreach (var acc in o.Accounts)
+            {
+                var bal = await Db.LedgerEntries
+                                  .Where(e => e.Account == acc.Code)
+                                  .SumAsync(e => (decimal?)e.Amount) ?? 0;
+                balances[acc.Code] = bal;
+            }
+        }
+    }
+}
