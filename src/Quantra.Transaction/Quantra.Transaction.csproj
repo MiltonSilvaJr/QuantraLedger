@@ -12,8 +12,8 @@
 		<PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.5" />
 
 		<!-- MassTransit para pub/sub -->
-		<PackageReference Include="MassTransit" Version="8.4.1" />
-		<PackageReference Include="MassTransit.AspNetCore" Version="8.4.1" />
+		<PackageReference Include="MassTransit" Version="8.1.0" />
+		<PackageReference Include="MassTransit.AspNetCore" Version="8.1.0" />
 
 		<!-- EF Core e provider PostgreSQL -->
 		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.5" />
