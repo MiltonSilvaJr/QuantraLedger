@@ -1,0 +1,6 @@
+<Project>
+  <PropertyGroup>
+    <!-- Permite que nuget/downgrades não quebrem o build -->
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+  </PropertyGroup>
+</Project>

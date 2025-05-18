@@ -8,16 +8,12 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<!-- Host genérico -->
-		<PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.5" />
+		<!-- Pub/Sub com MassTransit versão 8.4.1 -->
+		<PackageReference Include="MassTransit" Version="8.4.1" />
 
-		<!-- MassTransit para pub/sub -->
-		<PackageReference Include="MassTransit" Version="8.1.0" />
-		<PackageReference Include="MassTransit.AspNetCore" Version="8.1.0" />
-
-		<!-- EF Core e provider PostgreSQL -->
-		<PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.5" />
-		<PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
+		<!-- Entity Framework Core e provider PostgreSQL (alinhado à Persistence) -->
+		  <PackageReference Include="Microsoft.EntityFrameworkCore" Version="9.0.5" />
+		  <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
 	</ItemGroup>
 
 	<ItemGroup>
