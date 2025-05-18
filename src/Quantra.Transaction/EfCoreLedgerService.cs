@@ -1,10 +1,13 @@
 using MassTransit;
+using Microsoft.EntityFrameworkCore;
 using Quantra.Domain;
 using Quantra.Domain.Models;
 using Quantra.Messaging;
+using Quantra.Messaging.Events;
 using Quantra.Persistence;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Quantra.Transaction
@@ -44,15 +47,33 @@ namespace Quantra.Transaction
             return entity;
         }
 
-        public async Task<IEnumerable<Transaction>> PostAsync(IEnumerable<LedgerInstruction> inputs, string? correlationId = null)
+        public async Task<Transaction> PostAsync(string accountId, string counterparty, decimal amount, string idempotencyKey, string? correlationId = null)
         {
-            var results = new List<Transaction>();
+            var instruction = new LedgerInstruction
+            {
+                AccountId = accountId,
+                Counterparty = counterparty,
+                Amount = amount,
+                IdempotencyKey = idempotencyKey
+            };
+            return await PostAsync(instruction, correlationId);
+        }
+
+        public async Task<Transaction> PostAsync(IEnumerable<LedgerInstruction> inputs, string? correlationId = null)
+        {
+            Transaction? last = null;
             foreach (var input in inputs)
             {
-                var tx = await PostAsync(input, correlationId);
-                results.Add(tx);
+                last = await PostAsync(input, correlationId);
             }
-            return results;
+            return last!;
+        }
+
+        public async Task<decimal> GetBalanceAsync(string accountId, string? correlationId = null)
+        {
+            return await _db.Transactions
+                            .Where(t => t.AccountId == accountId)
+                            .SumAsync(t => t.Amount);
         }
     }
 }
