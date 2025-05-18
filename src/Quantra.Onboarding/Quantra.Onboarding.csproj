@@ -7,22 +7,13 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<!-- Swagger / OpenAPI (alinhado à Domain) -->
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="8.1.1" />
-
-		<!-- FluentValidation -->
 		<PackageReference Include="FluentValidation.AspNetCore" Version="11.3.0" />
-
-		<!-- OpenTelemetry Hosting para métricas/tracing -->
+		<PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="10.0.1" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.4" />
 		<PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.4.0" />
 		<PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.4.0" />
 		<PackageReference Include="OpenTelemetry.Instrumentation.Http" Version="1.4.0" />
-
-		<!-- MediatR para CQRS/Bus -->
-		<PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="10.0.1" />
-
-		<!-- Entity Framework Core In-Memory para testes locais -->
-		<PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="8.0.4" />
 	</ItemGroup>
 
 	<ItemGroup>
