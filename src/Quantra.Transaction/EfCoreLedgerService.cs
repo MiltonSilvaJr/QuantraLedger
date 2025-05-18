@@ -1,61 +1,58 @@
-
 using MassTransit;
-using Microsoft.EntityFrameworkCore;
 using Quantra.Domain;
 using Quantra.Domain.Models;
-using Quantra.Messaging.Events;
+using Quantra.Messaging;
 using Quantra.Persistence;
+using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
-namespace Quantra.Transaction;
-
-public class EfCoreLedgerService : ILedgerService
+namespace Quantra.Transaction
 {
-    private readonly LedgerDbContext _db;
-    private readonly IPublishEndpoint _bus;
-    public EfCoreLedgerService(LedgerDbContext db, IPublishEndpoint bus)
+    public class EfCoreLedgerService : ILedgerService
     {
-        _db = db;
-        _bus = bus;
-    }
+        private readonly LedgerDbContext _db;
+        private readonly IPublishEndpoint _bus;
 
-    // existing methods
-    public async Task<Transaction> PostAsync(string debitAcc, string creditAcc, decimal amount, string currency = "BRL", string? idempotencyKey = null)
-    {
-        var tx = await PostAsync(new[]
+        public EfCoreLedgerService(LedgerDbContext db, IPublishEndpoint bus)
         {
-            new LedgerInstruction(debitAcc, "debit", amount, currency),
-            new LedgerInstruction(creditAcc, "credit", amount, currency)
-        }, idempotencyKey);
-        return tx;
-    }
-
-    public async Task<Transaction> PostAsync(IEnumerable<LedgerInstruction> instructions, string? idempotencyKey = null)
-    {
-        if (idempotencyKey != null)
-        {
-            var existing = await _db.Transactions.Include(t=>t.Entries)
-                                .FirstOrDefaultAsync(t => t.ExternalId == idempotencyKey);
-            if (existing is not null) return existing;
+            _db = db;
+            _bus = bus;
         }
 
-        var entries = instructions.Select(i => new LedgerEntry(Guid.NewGuid(), i.Account,
-            i.Direction == "debit" ? -i.Amount : i.Amount, i.Currency, i.Direction, DateTime.UtcNow)).ToList();
-
-        var tx = new Transaction
+        public async Task<Transaction> PostAsync(LedgerInstruction input, string? correlationId = null)
         {
-            ExternalId = idempotencyKey ?? Guid.NewGuid().ToString("N"),
-            Entries = entries
-        };
-        _db.Transactions.Add(tx);
-        await _db.SaveChangesAsync();
+            var entity = new Transaction
+            {
+                Id = Guid.NewGuid(),
+                AccountId = input.AccountId,
+                Counterparty = input.Counterparty,
+                Amount = input.Amount,
+                Timestamp = DateTime.UtcNow,
+                CorrelationId = correlationId
+            };
 
-        await _bus.Publish(new TransactionCreatedEvent(tx.Id, tx.Timestamp, tx.ExternalId));
+            await _db.Transactions.AddAsync(entity);
+            await _db.SaveChangesAsync();
 
-        return tx;
+            await _bus.Publish(new TransactionCreatedEvent(
+                entity.Id,
+                entity.Amount,
+                entity.Timestamp,
+                correlationId));
+
+            return entity;
+        }
+
+        public async Task<IEnumerable<Transaction>> PostAsync(IEnumerable<LedgerInstruction> inputs, string? correlationId = null)
+        {
+            var results = new List<Transaction>();
+            foreach (var input in inputs)
+            {
+                var tx = await PostAsync(input, correlationId);
+                results.Add(tx);
+            }
+            return results;
+        }
     }
-
-    public async Task<decimal> GetBalanceAsync(string account, string currency = "BRL") =>
-        await _db.LedgerEntries
-                 .Where(e=>e.Account==account && e.Currency==currency)
-                 .SumAsync(e=>e.Amount);
 }
